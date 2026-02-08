@@ -442,12 +442,12 @@ async fn async_tray_app(board_kind: BoardKind) -> Result<(), Box<dyn Error>> {
 
             // Reactive mode keypress handling (Linux only)
             Some(Some(res)) = OptionFuture::from(reactive_stream.as_mut().map(|s| s.next())), if board.is_some() => {
+                #[cfg(target_os = "linux")]
                 match res {
                     Ok(Err(e)) => {
                         eprintln!("reactive stream error: {e}");
                         handle_disconnect(&mut board, &mut state, &menu_items);
                     }
-                    #[cfg(target_os = "linux")]
                     Ok(Ok(ev)) if !is_reactive_running => {
                         if matches!(ev.destructure(), evdev::EventSummary::Key(_, _, _)) {
                             is_reactive_running = true;
@@ -470,6 +470,8 @@ async fn async_tray_app(board_kind: BoardKind) -> Result<(), Box<dyn Error>> {
                     }
                     _ => {}
                 }
+                #[cfg(not(target_os = "linux"))]
+                let _ = res;
             }
         }
     }

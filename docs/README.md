@@ -20,7 +20,7 @@
 
 Cross-platform utility for syncing zoom65v3 screen modules
 
-**Usage**: **`zoom-sync`** \[**`--auto`** | **`--zoom65v3`**\] \[_`COMMAND ...`_\]
+**Usage**: **`zoom-sync`** \[**`--auto`** | **`--zoom65v3`** | **`--zoom75-tiga`**\] \[_`COMMAND ...`_\]
 
 
 
@@ -29,6 +29,8 @@ Cross-platform utility for syncing zoom65v3 screen modules
   Auto-detect connected board (default)
 - **`    --zoom65v3`** &mdash; 
   Zoom65 V3
+- **`    --zoom75-tiga`** &mdash; 
+  Zoom75 TIGA
 
 
 

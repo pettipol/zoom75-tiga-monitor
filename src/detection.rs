@@ -5,6 +5,7 @@ use std::str::FromStr;
 use bpaf::Bpaf;
 use hidapi::HidApi;
 use zoom65v3::{Zoom65v3, INFO as ZOOM65V3_INFO};
+use zoom75_tiga::{Zoom75Tiga, INFO as ZOOM75_TIGA_INFO};
 use zoom_sync_core::{Board, BoardError, BoardInfo};
 
 /// Supported board types
@@ -16,16 +17,21 @@ pub enum BoardKind {
     Auto,
     /// Zoom65 V3
     Zoom65v3,
+    /// Zoom75 TIGA
+    Zoom75Tiga,
 }
 
 impl FromStr for BoardKind {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
+        match s.to_lowercase().replace('-', "").as_str() {
             "auto" => Ok(Self::Auto),
             "zoom65v3" => Ok(Self::Zoom65v3),
-            _ => Err(format!("unknown board: {s}. Available: auto, zoom65v3")),
+            "zoom75tiga" => Ok(Self::Zoom75Tiga),
+            _ => Err(format!(
+                "unknown board: {s}. Available: auto, zoom65v3, zoom75-tiga"
+            )),
         }
     }
 }
@@ -35,6 +41,7 @@ impl std::fmt::Display for BoardKind {
         match self {
             Self::Auto => write!(f, "auto"),
             Self::Zoom65v3 => write!(f, "zoom65v3"),
+            Self::Zoom75Tiga => write!(f, "zoom75-tiga"),
         }
     }
 }
@@ -58,17 +65,20 @@ impl BoardKind {
                     if matches(device, &ZOOM65V3_INFO) {
                         return Ok(Box::new(Zoom65v3::open()?));
                     }
-                    // Add more boards here as they're implemented
+                    if matches(device, &ZOOM75_TIGA_INFO) {
+                        return Ok(Box::new(Zoom75Tiga::open()?));
+                    }
                 }
                 Err(BoardError::DeviceNotFound)
             },
             BoardKind::Zoom65v3 => Ok(Box::new(Zoom65v3::open()?)),
+            BoardKind::Zoom75Tiga => Ok(Box::new(Zoom75Tiga::open()?)),
         }
     }
 
     /// List all supported board CLI names
     #[allow(dead_code)]
     pub fn supported_boards() -> &'static [&'static str] {
-        &["auto", "zoom65v3"]
+        &["auto", "zoom65v3", "zoom75-tiga"]
     }
 }

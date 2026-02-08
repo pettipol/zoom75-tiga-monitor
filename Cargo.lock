@@ -572,6 +572,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "460fbee9c2c2f33933d720630a6a0bac33ba7053db5344fac858d4b8952d77d5"
 
 [[package]]
+name = "ctrlc"
+version = "3.5.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "73736a89c4aff73035ba2ed2e565061954da00d4970fc9ac25dcc85a2a20d790"
+dependencies = [
+ "dispatch2",
+ "nix 0.30.1",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
 name = "darling"
 version = "0.20.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -777,7 +788,7 @@ dependencies = [
  "cfg-if",
  "futures-core",
  "libc",
- "nix",
+ "nix 0.29.0",
  "tokio",
 ]
 
@@ -1899,6 +1910,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "macsmc"
+version = "0.1.7"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e1d7bca58ae48ddde869cb540e95108ee0bcfe2e441635f3e12646d920e3d4cb"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "maybe-rayon"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2008,6 +2028,18 @@ name = "nix"
 version = "0.29.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "71e2746dc3a24dd78b3cfcb7be93368c6de9963d30f43a6a73998a9cf4b17b46"
+dependencies = [
+ "bitflags 2.10.0",
+ "cfg-if",
+ "cfg_aliases",
+ "libc",
+]
+
+[[package]]
+name = "nix"
+version = "0.30.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "74523f3a35e05aba87a1d978330aef40f67b0304ac79c1c00b294c9830543db6"
 dependencies = [
  "bitflags 2.10.0",
  "cfg-if",
@@ -4479,6 +4511,7 @@ version = "0.2.0"
 dependencies = [
  "bpaf",
  "chrono",
+ "ctrlc",
  "directories",
  "either",
  "evdev",
@@ -4490,6 +4523,7 @@ dependencies = [
  "humantime-serde",
  "image",
  "ipinfo",
+ "macsmc",
  "muda",
  "notify-rust",
  "nvml-wrapper",
@@ -4507,6 +4541,7 @@ dependencies = [
  "windows",
  "zoom-sync-core",
  "zoom65v3",
+ "zoom75-tiga",
 ]
 
 [[package]]
@@ -4521,6 +4556,15 @@ dependencies = [
 [[package]]
 name = "zoom65v3"
 version = "0.4.0"
+dependencies = [
+ "chrono",
+ "hidapi",
+ "zoom-sync-core",
+]
+
+[[package]]
+name = "zoom75-tiga"
+version = "0.1.0"
 dependencies = [
  "chrono",
  "hidapi",
