@@ -410,4 +410,5 @@ architecture for the Zoom65 family.
 
 - **ILSpy / ilspycmd** — .NET decompiler (used to analyze MeletrixID)
 - **Rust** — programming language and toolchain
-- **Claude Code** — AI-assisted development (Anthropic)
+- **[Claude Code](https://docs.anthropic.com/en/docs/claude-code)** — Anthropic's CLI agent for code generation, debugging, and reverse engineering
+- **[Ollama](https://ollama.com)** — local LLM inference, including [Qwen 3](https://github.com/QwenLM/Qwen3) for protocol analysis and code review

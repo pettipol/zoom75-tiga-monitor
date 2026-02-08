@@ -6,6 +6,16 @@ Streams CPU temperature, GPU temperature, fan speed, and network throughput from
 
 > This project is a fork of [zoom-sync](https://github.com/ozboar/zoom-sync) by ozboar, which provides the foundational HID communication layer and board abstraction for the Zoom65 family. The Zoom75 TIGA display protocol was reverse-engineered from the official MeletrixID Windows application.
 
+---
+
+> **DISCLAIMER — USE AT YOUR OWN RISK**
+>
+> This software is **experimental** (pre-release/beta) and interacts directly with your keyboard's hardware via USB HID. Under certain conditions (system sleep, unexpected USB disconnection), the keyboard display may freeze and become unresponsive. **Recovery from a frozen display may require physically opening the keyboard** — removing the top case and disconnecting the internal display ribbon cable to cut power to the display module. This procedure involves handling fragile ribbon cables and connectors, and carries a real risk of **mechanical and/or electrical damage** to your keyboard.
+>
+> **The authors accept no responsibility for any damage** — hardware, software, or otherwise — resulting from the use of this software. By downloading or running these tools, you acknowledge these risks and agree to proceed entirely at your own risk.
+
+---
+
 ## Features
 
 - Real-time CPU/GPU temperature, fan RPM, and network speed on the keyboard display
@@ -86,18 +96,23 @@ cargo build --release --example tiga_monitor --example tiga_cmd
 
 See [USER_GUIDE.md](USER_GUIDE.md) for the full command reference, display navigation, troubleshooting, and detailed usage scenarios.
 
-## Warning — Display Freeze Risk
+## Warning — Display Freeze and Hardware Reset
 
-**This software is in pre-release/beta state.**
+**This software is in pre-release/beta state.** If macOS goes to sleep while the monitor is running, the USB connection drops and the keyboard display may freeze on the last sysinfo screen.
 
-If macOS goes to sleep while the monitor is running, the USB connection drops and the keyboard display may freeze. The `caffeinate` integration prevents this in normal use, but if it happens:
+The `caffeinate` integration prevents sleep in normal use. However, if a freeze does occur:
 
-- The keyboard itself continues to work normally — only the display is affected
-- **Disconnecting the USB cable is NOT sufficient** — the display module retains its own power state
-- Recovery requires a **hardware reset**: opening the keyboard top case to disconnect the internal display ribbon cable
-- This procedure carries risk of mechanical/electrical damage
+- The keyboard itself continues to work normally — **only the display module is affected**
+- **Disconnecting the USB cable is NOT sufficient to recover** — the display module has its own power state independent of the USB connection, and retains whatever was on screen
+- Recovery requires a **hardware reset**: you must **physically open the keyboard top case**, locate the internal display ribbon cable, **disconnect it** to cut power to the display, then reconnect it and close the case
+- This involves handling **fragile ribbon cables, clips, and connectors** — there is a real risk of **mechanical and/or electrical damage** to your keyboard
 
-**Always use Ctrl+C to stop the monitor** (triggers clean shutdown) and **avoid closing the laptop lid** while it's running.
+**To minimize risk:**
+- **Always stop the monitor with Ctrl+C** (triggers a clean shutdown that restores the home screen)
+- **Never close the laptop lid** or let the Mac sleep while the monitor is running
+- Do not force-kill the process (`kill -9`) or close the terminal abruptly
+
+See [USER_GUIDE.md — Scenario 6](USER_GUIDE.md#scenario-6-display-frozen-after-sleepsuspend) for the full hardware reset procedure.
 
 ## How It Works
 
@@ -115,7 +130,9 @@ The monitor communicates with the keyboard via 32-byte HID packets using a rever
 - **Upstream**: [zoom-sync](https://github.com/ozboar/zoom-sync) by ozboar — HID communication layer and board abstraction
 - **Protocol**: Reverse-engineered from MeletrixID (.NET 4.7.2, decompiled with ILSpy)
 - **Weather**: [Open-Meteo](https://open-meteo.com) (CC BY 4.0) + [ipinfo.io](https://ipinfo.io)
-- **AI-assisted development**: Built with [Claude Code](https://claude.ai/claude-code) by Anthropic
+- **AI-assisted development**:
+  - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (Anthropic) — CLI agent for code generation, debugging, and reverse engineering
+  - Local LLMs via [Ollama](https://ollama.com) — including [Qwen 3](https://github.com/QwenLM/Qwen3) for protocol analysis and code review
 
 ## License
 
