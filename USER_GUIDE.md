@@ -139,12 +139,13 @@ If the Mac went to sleep and the display is frozen, **disconnecting the
 USB cable alone is NOT enough** — the display module retains its own power
 state independently of the USB connection.
 
-To recover, a **hardware reset** is required:
+To recover, a **hardware reset** is required — you must cut power to the
+display module by disconnecting its internal connector:
 
-1. **Open the keyboard top case** to access the internal display connector
-2. **Disconnect the display ribbon cable** to cut power to the display
-3. **Reconnect the display ribbon cable**
-4. **Close the top case**
+1. **Refer to the official Meletrix Zoom75 TIGA assembly/disassembly guide** before proceeding
+2. **Open the keyboard top case** to access the internal display connector. The Zoom75 TIGA uses press-fit (pogo-pin style) connectors — the display module connects via contact pressure when the case is assembled, not via soldered or latched ribbon cables
+3. **Separate the top case from the display module** to break the electrical contact, cutting power to the display
+4. **Reassemble the case**, ensuring the press-fit connectors make proper contact
 5. Reconnect the USB cable
 6. Restore clock and weather:
 
@@ -152,9 +153,10 @@ To recover, a **hardware reset** is required:
 ./tiga_cmd restore
 ```
 
-**WARNING**: Opening the top case and manipulating internal connectors
-carries risk of mechanical and electrical damage (fragile ribbon cables,
-clips, connectors). Proceed with care and at your own risk.
+**WARNING**: Although the press-fit design simplifies disassembly compared
+to ribbon cables, you should still proceed with care. Always follow the
+official Meletrix instructions for your specific keyboard model and revision.
+Proceed at your own risk.
 
 ---
 
@@ -362,9 +364,9 @@ Mac returns to its normal sleep behavior.
 - If the Mac somehow still slept and the display froze:
   - **Disconnecting the USB cable is NOT enough** — the display retains
     its own power state
-  - A **hardware reset** is required: open the keyboard top case,
-    disconnect and reconnect the internal display ribbon cable, then
-    close the case. This carries risk of mechanical/electrical damage.
+  - A **hardware reset** is required: open the keyboard top case to
+    disconnect the display module's press-fit connector, then reassemble.
+    Refer to the official Meletrix disassembly guide for your model.
   - After the hardware reset, reconnect USB and run `./tiga_cmd restore`
   - See **Scenario 6** above for full instructions
 
@@ -377,9 +379,11 @@ open-source community.
 
 ### Protocol Reverse Engineering
 
-The HID protocol used by the Zoom75 TIGA display was reverse-engineered
-by decompiling the official **MeletrixID** Windows application (.NET
-Framework 4.7.2, decompiled with ILSpy). Key findings:
+The HID protocol used by the Zoom75 TIGA display was determined through
+interoperability analysis of the official **MeletrixID** Windows application,
+as permitted under EU Software Directive 2009/24/EC Art. 6 and US DMCA
+Section 1201(f). No original code was copied; this is an independent
+implementation in Rust. Key findings:
 - 32-byte HID packets with CRC-CCITT and XOR checksum
 - Command set: Time (0x38), Weather (0xFE), Navigation (0x39), System
   Data (0xFF), Image (0xFC), Theme (0xFD), Display Reset (0x34+0xFB)
@@ -408,7 +412,7 @@ architecture for the Zoom65 family.
 
 ### Tools Used
 
-- **ILSpy / ilspycmd** — .NET decompiler (used to analyze MeletrixID)
+- **ILSpy / ilspycmd** — .NET decompiler (used for interoperability analysis)
 - **Rust** — programming language and toolchain
 - **[Claude Code](https://docs.anthropic.com/en/docs/claude-code)** — Anthropic's CLI agent for code generation, debugging, and reverse engineering
 - **[Ollama](https://ollama.com)** — local LLM inference, including [Qwen 3](https://github.com/QwenLM/Qwen3) for protocol analysis and code review

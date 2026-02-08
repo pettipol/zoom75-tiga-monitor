@@ -10,7 +10,7 @@ Streams CPU temperature, GPU temperature, fan speed, and network throughput from
 
 > **DISCLAIMER — USE AT YOUR OWN RISK**
 >
-> This software is **experimental** (pre-release/beta) and interacts directly with your keyboard's hardware via USB HID. Under certain conditions (system sleep, unexpected USB disconnection), the keyboard display may freeze and become unresponsive. **Recovery from a frozen display may require physically opening the keyboard** — removing the top case and disconnecting the internal display ribbon cable to cut power to the display module. This procedure involves handling fragile ribbon cables and connectors, and carries a real risk of **mechanical and/or electrical damage** to your keyboard.
+> This software is **experimental** (pre-release/beta) and interacts directly with your keyboard's hardware via USB HID. Under certain conditions (system sleep, unexpected USB disconnection), the keyboard display may freeze and become unresponsive. **Recovery from a frozen display requires physically opening the keyboard** — removing the top case to disconnect and reconnect the display connector, thereby cutting power to the display module and resetting it. The Zoom75 TIGA uses press-fit (pogo-pin style) connectors for the display, but the disassembly procedure still involves manipulating the case, clips, and internal components. **Always refer to the official Zoom75 TIGA assembly/disassembly instructions from Meletrix** before attempting this.
 >
 > **The authors accept no responsibility for any damage** — hardware, software, or otherwise — resulting from the use of this software. By downloading or running these tools, you acknowledge these risks and agree to proceed entirely at your own risk.
 
@@ -104,8 +104,8 @@ The `caffeinate` integration prevents sleep in normal use. However, if a freeze 
 
 - The keyboard itself continues to work normally — **only the display module is affected**
 - **Disconnecting the USB cable is NOT sufficient to recover** — the display module has its own power state independent of the USB connection, and retains whatever was on screen
-- Recovery requires a **hardware reset**: you must **physically open the keyboard top case**, locate the internal display ribbon cable, **disconnect it** to cut power to the display, then reconnect it and close the case
-- This involves handling **fragile ribbon cables, clips, and connectors** — there is a real risk of **mechanical and/or electrical damage** to your keyboard
+- Recovery requires a **hardware reset**: you must **physically open the keyboard top case** and disconnect the display connector to cut power to the display module, then reconnect it and close the case. The Zoom75 TIGA uses press-fit connectors (not soldered cables), but disassembly still requires care
+- **Always refer to the official Meletrix assembly/disassembly guide** for your keyboard before attempting this procedure
 
 **To minimize risk:**
 - **Always stop the monitor with Ctrl+C** (triggers a clean shutdown that restores the home screen)
@@ -128,12 +128,16 @@ The monitor communicates with the keyboard via 32-byte HID packets using a rever
 ## Credits
 
 - **Upstream**: [zoom-sync](https://github.com/ozboar/zoom-sync) by ozboar — HID communication layer and board abstraction
-- **Protocol**: Reverse-engineered from MeletrixID (.NET 4.7.2, decompiled with ILSpy)
+- **Protocol**: Reverse-engineered via interoperability analysis of MeletrixID, as permitted under EU Software Directive 2009/24/EC Art. 6 and US DMCA Section 1201(f). No original code was copied; this is an independent implementation
 - **Weather**: [Open-Meteo](https://open-meteo.com) (CC BY 4.0) + [ipinfo.io](https://ipinfo.io)
 - **AI-assisted development**:
   - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (Anthropic) — CLI agent for code generation, debugging, and reverse engineering
   - Local LLMs via [Ollama](https://ollama.com) — including [Qwen 3](https://github.com/QwenLM/Qwen3) for protocol analysis and code review
 
+## Adapting to Other Displays
+
+The architecture of this project (board traits, protocol module, HID packet encoding) is designed to be extensible. Similar logic could be applied to create support for other Meletrix keyboards with built-in displays (e.g., Zoom75 Dyna, or future models using the same protocol family). If you attempt this, **do so entirely at your own risk** — different hardware may behave differently, and incorrect commands could potentially cause unexpected behavior.
+
 ## License
 
-This project inherits the license from [zoom-sync](https://github.com/ozboar/zoom-sync).
+This project inherits the [MIT License](https://github.com/ozboar/zoom-sync/blob/main/LICENSE) from [zoom-sync](https://github.com/ozboar/zoom-sync) by Ossian Mapes.
