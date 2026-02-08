@@ -1,39 +1,47 @@
-# Zoom75 TIGA System Monitor — Guida Utente
+# Zoom75 TIGA System Monitor — User Guide
 
-Monitor in tempo reale per la tastiera Meletrix Zoom75 TIGA.
-Legge temperatura CPU, GPU, velocita' ventola e traffico di rete dal Mac
-e li mostra sul display integrato della tastiera, ciclando automaticamente
-tra le schermate.
+Real-time system monitor for the Meletrix Zoom75 TIGA keyboard.
+Reads CPU temperature, GPU temperature, fan speed, and network throughput
+from your Mac and displays them on the keyboard's built-in screen,
+automatically cycling between data pages.
 
-## Requisiti
+## Requirements
 
-- macOS su Apple Silicon (M1/M2/M3/M4)
-- Zoom75 TIGA collegata via USB
-- Rust toolchain installata (`rustup`)
-- Connessione internet (per geolocalizzazione e meteo)
+- macOS on Apple Silicon (M1/M2/M3/M4)
+- Zoom75 TIGA connected via USB (Bluetooth is not supported)
+- Internet connection (for weather geolocation — optional)
 
-## Installazione
+## Setup
+
+### 1. Make binaries executable
 
 ```bash
-cd tiga-fork
-cargo build --release --examples
+chmod +x tiga_monitor tiga_cmd
 ```
 
-I binari compilati si trovano in `target/release/examples/`:
-- `tiga_monitor` — monitor in tempo reale con prevenzione sleep
-- `tiga_cmd` — comandi singoli per setup, test e ripristino
+### 2. Allow unsigned binaries (first run only)
+
+macOS will block the binaries because they are not code-signed.
+The easiest fix is to remove the quarantine attribute:
+
+```bash
+xattr -d com.apple.quarantine tiga_monitor tiga_cmd
+```
+
+Alternatively: try running the binary, then go to
+**System Settings > Privacy & Security** and click **"Allow Anyway"**.
 
 ---
 
-## Guida Rapida
+## Usage Scenarios
 
-### Scenario 1: Primo collegamento o dopo hard reset
+### Scenario 1: First connection or after a hard reset
 
-La tastiera appena collegata (o dopo stacco/riattacco USB) non ha orario
-ne' meteo. Per impostare tutto in un colpo:
+After plugging in the keyboard (or after a USB disconnect/reconnect),
+the clock and weather are lost. To restore everything in one step:
 
 ```bash
-cargo run --release --example tiga_cmd -- restore
+./tiga_cmd restore
 ```
 
 Output:
@@ -44,15 +52,15 @@ Weather set (WMO:3, 13/8/14°C)
 Restore complete.
 ```
 
-Il display mostra ora l'orologio aggiornato. Ciclando manualmente dalla
-home si vede anche il meteo.
+The display now shows the updated clock. Weather data is saved by the
+firmware and can be viewed by manually cycling from the home screen.
 
-### Scenario 2: Avvio monitoraggio sistema
+### Scenario 2: Start system monitoring
 
-Per mostrare in tempo reale CPU, GPU, ventola e rete sul display:
+To show real-time CPU, GPU, fan, and network data on the display:
 
 ```bash
-cargo run --release --example tiga_monitor -- -v
+./tiga_monitor -v
 ```
 
 Output:
@@ -75,16 +83,19 @@ Press Ctrl+C to stop.
 [12:57:09] CPU:45°C GPU:44°C Fan:1355RPM Net:0.4Mbps
 ```
 
-Il monitor:
-1. Impedisce lo sleep del Mac (`caffeinate`) finche' e' attivo
-2. Sincronizza ora e meteo
-3. Entra nelle schermate sysinfo e cicla tra CPU, GPU, RPM, mbps
-4. Aggiorna i valori ogni 2 secondi, cambia schermata ogni 3 secondi
-5. Aggiorna il meteo ogni 30 minuti
+The monitor:
+1. **Activates sleep prevention** — launches `caffeinate -di` in the
+   background, which prevents the Mac from sleeping while the monitor
+   is running. This is essential to avoid display freezes (see below).
+2. Syncs clock and weather
+3. Enters the sysinfo screens and cycles between CPU, GPU, RPM, mbps
+4. Updates sensor values every 2 seconds, switches screen every 3 seconds
+5. Refreshes weather every 30 minutes
 
-### Scenario 3: Chiusura pulita
+### Scenario 3: Clean shutdown
 
-Premi **Ctrl+C**. Il monitor:
+To stop the monitor, press **Ctrl+C** in the terminal. This is the only
+way to stop it, and it triggers a clean shutdown sequence:
 
 ```
 ^C
@@ -96,235 +107,307 @@ Shutdown complete. Display restored to home with time/weather.
 Sleep prevention stopped.
 ```
 
-1. Esce dalle schermate sysinfo
-2. Torna alla home (orologio)
-3. Ri-sincronizza orario e meteo
-4. Disattiva la prevenzione sleep — il Mac puo' dormire di nuovo
+What happens on Ctrl+C:
+1. The monitor exits the sysinfo screens
+2. Navigates the display back to the home screen (clock)
+3. Re-syncs clock and weather so the display stays useful
+4. **Stops sleep prevention** (`caffeinate` is terminated) — the Mac
+   can sleep again normally
 
-### Scenario 4: Solo orario (senza meteo/internet)
+**Important**: Always use Ctrl+C to stop the monitor. Do not force-kill
+the process (e.g., `kill -9`) or close the terminal window abruptly, as
+this skips the shutdown sequence and leaves the display stuck on the
+last sysinfo screen (though still manually navigable). It also leaves
+`caffeinate` running, which would prevent your Mac from sleeping until
+you manually kill it (`killall caffeinate`).
 
-```bash
-cargo run --release --example tiga_cmd -- time
-```
-
-### Scenario 5: Solo meteo
-
-```bash
-cargo run --release --example tiga_cmd -- weather
-```
-
-### Scenario 6: Display bloccato dopo sospensione
-
-Se il Mac e' andato in sospensione e il display si e' bloccato:
-
-1. Stacca il cavo USB dalla tastiera
-2. Ricollega il cavo USB
-3. Ripristina orario e meteo:
+### Scenario 4: Set clock only (no internet needed)
 
 ```bash
-cargo run --release --example tiga_cmd -- restore
+./tiga_cmd time
 ```
+
+### Scenario 5: Set weather only
+
+```bash
+./tiga_cmd weather
+```
+
+### Scenario 6: Display frozen after sleep/suspend
+
+If the Mac went to sleep and the display is frozen, **disconnecting the
+USB cable alone is NOT enough** — the display module retains its own power
+state independently of the USB connection.
+
+To recover, a **hardware reset** is required:
+
+1. **Open the keyboard top case** to access the internal display connector
+2. **Disconnect the display ribbon cable** to cut power to the display
+3. **Reconnect the display ribbon cable**
+4. **Close the top case**
+5. Reconnect the USB cable
+6. Restore clock and weather:
+
+```bash
+./tiga_cmd restore
+```
+
+**WARNING**: Opening the top case and manipulating internal connectors
+carries risk of mechanical and electrical damage (fragile ribbon cables,
+clips, connectors). Proceed with care and at your own risk.
 
 ---
 
-## Riferimento Comandi — `tiga_cmd`
+## Command Reference — `tiga_cmd`
 
-Tool per comandi singoli. Ogni invocazione si connette, esegue il
-comando e si disconnette.
+Single-command tool. Each invocation connects, runs the command, and
+disconnects.
 
-### Ripristino e sincronizzazione
+### Restore and sync
 
 ```bash
-# Ripristino completo (orario + meteo) — il piu' utile dopo un reset
-cargo run --release --example tiga_cmd -- restore
+# Full restore (clock + weather) — most useful after a reset
+./tiga_cmd restore
 
-# Solo orario
-cargo run --release --example tiga_cmd -- time
+# Clock only
+./tiga_cmd time
 
-# Solo meteo (richiede internet)
-cargo run --release --example tiga_cmd -- weather
+# Weather only (requires internet)
+./tiga_cmd weather
 ```
 
-### Navigazione display
+### Display navigation
 
 ```bash
-# Torna alla home (orologio) — usa il reset display, funziona da ovunque
-cargo run --release --example tiga_cmd -- home
+# Return to home (clock) — uses display reset, works from anywhere
+./tiga_cmd home
 
-# Naviga giu' (nel menu: prossimo elemento; in sysinfo: prossima schermata)
-cargo run --release --example tiga_cmd -- down
+# Navigate down (in menu: next item; in sysinfo: next screen)
+./tiga_cmd down
 
-# Conferma selezione / entra nel sottomenu
-cargo run --release --example tiga_cmd -- switch
+# Confirm selection / enter submenu
+./tiga_cmd switch
 
-# Torna indietro di un livello
-cargo run --release --example tiga_cmd -- return
+# Go back one level
+./tiga_cmd return
 
-# Naviga su
-cargo run --release --example tiga_cmd -- up
+# Navigate up
+./tiga_cmd up
 ```
 
-### Invio dati sistema manuali
+### Manual system data
 
-Utile per test e debug. I valori appaiono sulle schermate sysinfo.
+Useful for testing and debugging. Values appear on sysinfo screens.
 
 ```bash
-# Formato: sysinfo <CPU°C> <GPU°C> <SSD°C> <FanRPM> <Net>
-# Net: il firmware divide per 10, quindi 500 = 50.0 Mbps
+# Format: sysinfo <CPU°C> <GPU°C> <SSD°C> <FanRPM> <Net>
+# Net: firmware divides by 10, so 500 = 50.0 Mbps
 
-# Esempio: CPU=42°C, GPU=77°C, SSD=35°C, Fan=1350 RPM, Net=50.0 Mbps
-cargo run --release --example tiga_cmd -- sysinfo 42 77 35 1350 500
+# Example: CPU=42°C, GPU=77°C, SSD=35°C, Fan=1350 RPM, Net=50.0 Mbps
+./tiga_cmd sysinfo 42 77 35 1350 500
 
-# Solo temperature senza fan/net
-cargo run --release --example tiga_cmd -- sysinfo 50 60 0 0 0
+# Temperatures only (no fan/net)
+./tiga_cmd sysinfo 50 60 0 0 0
 ```
 
-### Navigazione manuale alle schermate sysinfo
+### Manual sysinfo navigation
 
-Per entrare nelle schermate sysinfo (CPU/GPU/RPM/mbps) manualmente:
+To enter the sysinfo screens (CPU/GPU/RPM/mbps) manually:
 
 ```bash
-# Dalla home: entra nel menu selezione dati
-cargo run --release --example tiga_cmd -- down
+# From home: enter the data selection menu
+./tiga_cmd down
 
-# Attiva/evidenzia il menu
-cargo run --release --example tiga_cmd -- switch
+# Activate/highlight the menu
+./tiga_cmd switch
 
-# Entra nella prima schermata (CPU) — ora vedi il valore numerico
-cargo run --release --example tiga_cmd -- switch
+# Enter the first screen (CPU) — now shows the numeric value
+./tiga_cmd switch
 
-# Da qui, "down" cicla tra le schermate:
+# From here, "down" cycles between screens:
 # CPU → mbps → RPM → GPU → CPU
-cargo run --release --example tiga_cmd -- down
+./tiga_cmd down
 ```
 
-### Comandi raw (avanzato)
+### Raw commands (advanced)
 
 ```bash
-# Invia un pacchetto con comando e dati arbitrari
-# Formato: raw <CMD_HEX> <byte0> <byte1> ...
-cargo run --release --example tiga_cmd -- raw FF 0 0 42 0 77 0 0 5 70 0 0
+# Send a packet with arbitrary command and data bytes
+# Format: raw <CMD_HEX> <byte0> <byte1> ...
+./tiga_cmd raw FF 0 0 42 0 77 0 0 5 70 0 0
 ```
 
 ---
 
-## Riferimento Opzioni — `tiga_monitor`
+## Options Reference — `tiga_monitor`
 
-### Tutte le opzioni
+### All options
 
-| Opzione                      | Descrizione                              | Default |
+| Option                       | Description                              | Default |
 |------------------------------|------------------------------------------|---------|
-| `--interval <SEC>`          | Ogni quanti secondi aggiornare i dati    | 2       |
-| `--cycle <SEC>`             | Ogni quanti secondi cambiare schermata   | 3       |
-| `--no-cycle`                | Resta su una sola schermata              | —       |
-| `--no-weather`              | Disabilita sincronizzazione meteo        | —       |
-| `--weather-interval <MIN>`  | Ogni quanti minuti aggiornare il meteo   | 30      |
-| `-v` / `--verbose`          | Stampa i valori anche a terminale        | off     |
-| `-h` / `--help`             | Mostra l'aiuto                           | —       |
+| `--interval <SEC>`          | Sensor update interval (seconds)         | 2       |
+| `--cycle <SEC>`             | Screen switch interval (seconds)         | 3       |
+| `--no-cycle`                | Stay on one screen (no cycling)          | —       |
+| `--no-weather`              | Disable weather sync                     | —       |
+| `--weather-interval <MIN>`  | Weather refresh interval (minutes)       | 30      |
+| `-v` / `--verbose`          | Print values to terminal                 | off     |
+| `-h` / `--help`             | Show help                                | —       |
 
-### Esempi d'uso
+### Usage examples
 
 ```bash
-# Uso standard con output a terminale (consigliato)
-cargo run --release --example tiga_monitor -- -v
+# Standard use with terminal output (recommended)
+./tiga_monitor -v
 
-# Silenzioso (nessun output a terminale, solo il display)
-cargo run --release --example tiga_monitor
+# Silent mode (no terminal output, display only)
+./tiga_monitor
 
-# Aggiornamento rapido: dati ogni 1s, schermate ogni 2s
-cargo run --release --example tiga_monitor -- --interval 1 --cycle 2
+# Fast updates: data every 1s, screen switch every 2s
+./tiga_monitor --interval 1 --cycle 2
 
-# Aggiornamento rilassato: dati ogni 5s, schermate ogni 8s
-cargo run --release --example tiga_monitor -- --interval 5 --cycle 8
+# Relaxed updates: data every 5s, screen switch every 8s
+./tiga_monitor --interval 5 --cycle 8
 
-# Senza meteo (utile offline o senza internet)
-cargo run --release --example tiga_monitor -- --no-weather -v
+# Without weather (useful offline)
+./tiga_monitor --no-weather -v
 
-# Meteo aggiornato ogni 15 minuti (invece dei 30 di default)
-cargo run --release --example tiga_monitor -- --weather-interval 15
+# Weather updated every 15 minutes (instead of default 30)
+./tiga_monitor --weather-interval 15
 
-# Schermata fissa (resta sulla schermata corrente, nessun cycling)
-cargo run --release --example tiga_monitor -- --no-cycle -v
+# Fixed screen (stay on current screen, no cycling)
+./tiga_monitor --no-cycle -v
 
-# Tutto personalizzato: 3s dati, 5s cycling, meteo ogni 10min, verbose
-cargo run --release --example tiga_monitor -- --interval 3 --cycle 5 --weather-interval 10 -v
+# Fully custom: 3s data, 5s cycling, weather every 10min, verbose
+./tiga_monitor --interval 3 --cycle 5 --weather-interval 10 -v
 ```
 
 ---
 
-## Schermate del display
+## Display Screens
 
-### Home e schermate principali
+### Home and main screens
 
-La home mostra l'orologio. Ciclando manualmente dalla home si accede a
-schermate separate: meteo, GIF, animazione, ecc. Non esiste una home
-che mostra orario e meteo insieme — sono schermate separate.
+The home screen shows the clock only. Weather, GIF, and animation are
+on separate screens accessible by manually cycling from the home screen.
+There is no combined clock+weather home screen — they are separate pages.
 
-### Schermate sysinfo (gestite dal monitor)
+### Sysinfo screens (managed by the monitor)
 
-Il monitor cicla automaticamente tra 4 schermate dati:
+The monitor automatically cycles between 4 data screens:
 
-| Schermata | Dato visualizzato                     |
-|-----------|---------------------------------------|
-| **CPU**   | Temperatura CPU (°C)                  |
-| **GPU**   | Temperatura GPU (°C)                  |
-| **RPM**   | Velocita' ventola (giri/min)          |
-| **mbps**  | Velocita' rete (Megabit/s)            |
+| Screen  | Data displayed                         |
+|---------|----------------------------------------|
+| **CPU** | CPU temperature (°C)                   |
+| **GPU** | GPU temperature (°C)                   |
+| **RPM** | Fan speed (revolutions per minute)     |
+| **mbps**| Network speed (Megabits per second)    |
 
-L'ordine di cycling e': CPU → mbps → RPM → GPU → CPU
+Cycling order: CPU → mbps → RPM → GPU → CPU
 
-## Come funzionano i sensori
+## How Sensors Work
 
-| Sensore    | Fonte                              | Note                              |
-|------------|------------------------------------|-----------------------------------|
-| CPU temp   | PMU die sensors (hottest cluster)  | Valore piu' alto tra i die        |
-| GPU temp   | PMU die sensors (media)            | Media dei restanti die            |
-| Fan RPM    | Apple SMC                          | Prima ventola del sistema         |
-| Net speed  | Interfacce di rete attive          | Somma upload + download           |
+| Sensor     | Source                              | Notes                             |
+|------------|-------------------------------------|-----------------------------------|
+| CPU temp   | PMU die sensors (hottest cluster)   | Highest value among die sensors   |
+| GPU temp   | PMU die sensors (average)           | Average of remaining die sensors  |
+| Fan RPM    | Apple SMC                           | First system fan                  |
+| Net speed  | Active network interfaces           | Sum of upload + download          |
 
-Note:
-- Su M4 a idle le ventole sono spente (Fan=0 RPM e' normale)
-- I valori CPU/GPU si stabilizzano dopo 2-4 secondi dal primo avvio
+Notes:
+- On M4 at idle, fans are off (Fan=0 RPM is normal)
+- CPU/GPU values stabilize 2-4 seconds after first launch
 
-## Prevenzione sleep
+## Sleep Prevention
 
-Il monitor lancia automaticamente `caffeinate -di` all'avvio, che impedisce
-al Mac di andare in sospensione (sia display che sistema). Questo e'
-necessario perche' se il Mac va in sleep, il collegamento USB si interrompe
-e il display della tastiera puo' bloccarsi.
+The monitor automatically launches `caffeinate -di` at startup, which
+prevents the Mac from sleeping (both display and system). This is
+**critical** because if the Mac sleeps, the USB connection drops and the
+keyboard display may freeze. A frozen display cannot be recovered by
+simply reconnecting the USB cable — it requires a hardware reset
+(opening the top case to disconnect the internal display connector),
+which carries risk of damage. See **Scenario 6** for details.
 
-Alla chiusura del monitor (Ctrl+C), caffeinate viene terminato e il Mac
-torna al suo comportamento normale.
+When the monitor is stopped (Ctrl+C), caffeinate is terminated and the
+Mac returns to its normal sleep behavior.
 
 ---
 
-## Risoluzione problemi
+## Troubleshooting
 
 **"Zoom75 TIGA not found"**
-- Verifica che la tastiera sia collegata via USB (non Bluetooth)
-- Verifica che nessun'altra applicazione (es. MeletrixID) stia usando il dispositivo
+- Make sure the keyboard is connected via USB (not Bluetooth)
+- Make sure no other application (e.g., MeletrixID) is using the device
 
 **"Failed to connect to SMC"**
-- Il monitor richiede macOS su Apple Silicon
-- Su Intel Mac i sensori temperatura non sono supportati
+- The monitor requires macOS on Apple Silicon
+- Intel Macs are not supported for temperature sensors
 
-**Valori CPU/GPU a 0°C**
-- Puo' capitare al primissimo avvio; i valori si stabilizzano dopo 2-4 secondi
+**CPU/GPU showing 0°C**
+- May happen at first launch; values stabilize after 2-4 seconds
 
-**Fan sempre a 0 RPM**
-- Normale su M4 a idle: le ventole restano spente fino a carico elevato
+**Fan always at 0 RPM**
+- Normal on M4 at idle: fans stay off until the system is under load
 
-**Il display non cicla tra le schermate sysinfo**
-- Il monitor deve navigare nella gerarchia: home → menu → selezione → CPU
-- Se il cycling non funziona, prova a resettare con `tiga_cmd home` e rilanciare
+**Display not cycling through sysinfo screens**
+- The monitor must navigate the hierarchy: home → menu → selection → CPU
+- If cycling doesn't work, try resetting with `./tiga_cmd home` and restart
 
 **"Fetching weather... failed"**
-- Verifica la connessione internet
-- Usa `--no-weather` per avviare il monitor senza meteo
-- Il meteo verra' ritentato al prossimo intervallo
+- Check your internet connection
+- Use `--no-weather` to start the monitor without weather
+- Weather will be retried at the next interval
 
-**Display bloccato dopo sospensione/sleep del Mac**
-- Il monitor impedisce automaticamente lo sleep (`caffeinate -di`)
-- Se per qualche motivo il Mac va comunque in sospensione e il display si blocca:
-  1. Stacca e ricollega il cavo USB
-  2. `cargo run --release --example tiga_cmd -- restore`
+**Display frozen after sleep**
+- The monitor automatically prevents sleep (`caffeinate -di`)
+- If the Mac somehow still slept and the display froze:
+  - **Disconnecting the USB cable is NOT enough** — the display retains
+    its own power state
+  - A **hardware reset** is required: open the keyboard top case,
+    disconnect and reconnect the internal display ribbon cable, then
+    close the case. This carries risk of mechanical/electrical damage.
+  - After the hardware reset, reconnect USB and run `./tiga_cmd restore`
+  - See **Scenario 6** above for full instructions
+
+---
+
+## Acknowledgements and Sources
+
+This project was built through reverse engineering and the work of the
+open-source community.
+
+### Protocol Reverse Engineering
+
+The HID protocol used by the Zoom75 TIGA display was reverse-engineered
+by decompiling the official **MeletrixID** Windows application (.NET
+Framework 4.7.2, decompiled with ILSpy). Key findings:
+- 32-byte HID packets with CRC-CCITT and XOR checksum
+- Command set: Time (0x38), Weather (0xFE), Navigation (0x39), System
+  Data (0xFF), Image (0xFC), Theme (0xFD), Display Reset (0x34+0xFB)
+- Sensor data format and display firmware behavior were validated
+  through extensive real-device testing
+
+### Upstream Project
+
+This tool is built as a fork of
+[zoom-sync](https://github.com/ozboar/zoom-sync) by ozboar, which
+provides the foundational HID communication layer and board abstraction
+architecture for the Zoom65 family.
+
+### Libraries and APIs
+
+| Library / Service | Purpose | License |
+|-------------------|---------|---------|
+| [hidapi](https://crates.io/crates/hidapi) | USB HID communication | MIT |
+| [sysinfo](https://crates.io/crates/sysinfo) | CPU/GPU temperature reading (PMU die sensors) | MIT |
+| [macsmc](https://crates.io/crates/macsmc) | Apple SMC access (fan speed) | MIT/Apache-2.0 |
+| [open-meteo-rs](https://crates.io/crates/open-meteo-rs) | Weather data (Open-Meteo API) | MIT |
+| [ipinfo.io](https://ipinfo.io) | IP-based geolocation (for weather) | Free tier |
+| [Open-Meteo](https://open-meteo.com) | Free weather API | CC BY 4.0 |
+| [ctrlc](https://crates.io/crates/ctrlc) | Ctrl+C signal handling | MIT/Apache-2.0 |
+| [tokio](https://crates.io/crates/tokio) | Async runtime (for HTTP requests) | MIT |
+
+### Tools Used
+
+- **ILSpy / ilspycmd** — .NET decompiler (used to analyze MeletrixID)
+- **Rust** — programming language and toolchain
+- **Claude Code** — AI-assisted development (Anthropic)
