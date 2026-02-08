@@ -1,1 +1,18 @@
 /target
+
+# === LOCAL-ONLY FILES (not pushed to GitHub) ===
+
+# Debug/test examples (only tiga_monitor.rs and tiga_cmd.rs are published)
+examples/smc_dump.rs
+examples/smc_allkeys.rs
+examples/tiga_probe.rs
+examples/tiga_probe_v2.rs
+examples/tiga_screen_explore.rs
+examples/tiga_sysdata_test.rs
+examples/tiga_targeted_test.rs
+
+# Local project documentation (project root has its own docs)
+LOCAL_PROJECT_GUIDE.md
+
+# macOS
+.DS_Store
